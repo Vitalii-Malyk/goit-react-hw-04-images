@@ -30,6 +30,7 @@ export default class App extends Component {
       prevState.page !== this.state.page
     ) {
       this.serverRequest();
+      this.clearGalleryContainer();
     }
   }
 
@@ -61,6 +62,9 @@ export default class App extends Component {
     this.setState(prevState => ({
       page: prevState.page + 1,
     }));
+  };
+  clearGalleryContainer = () => {
+    this.setState({ images: [] });
   };
 
   toggleModal = () => {
