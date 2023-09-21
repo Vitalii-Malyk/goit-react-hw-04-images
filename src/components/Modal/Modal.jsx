@@ -1,34 +1,37 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 
 import { OverlayEl, ModalEl, ImgEl } from 'components/Modal/Modal.styled';
 
-export default class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.clickEsc);
-  }
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.clickEsc);
-  }
+const Modal = ({ url, onClose }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', clickEsc);
+  });
 
-  clickBackdrop = event => {
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('keydown', clickEsc);
+    };
+  });
+
+  const clickBackdrop = event => {
     if (event.target === event.currentTarget) {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  clickEsc = event => {
+  const clickEsc = event => {
     if (event.code === 'Escape') {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  render() {
-    return (
-      <OverlayEl className="overlay" onClick={this.clickBackdrop}>
-        <ModalEl className="modal">
-          <ImgEl src={this.props.url} alt="" />
-        </ModalEl>
-      </OverlayEl>
-    );
-  }
-}
+  return (
+    <OverlayEl className="overlay" onClick={clickBackdrop}>
+      <ModalEl className="modal">
+        <ImgEl src={url} alt="" />
+      </ModalEl>
+    </OverlayEl>
+  );
+};
+
+export default Modal;

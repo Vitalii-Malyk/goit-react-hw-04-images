@@ -30,6 +30,8 @@ export default class App extends Component {
       prevState.page !== this.state.page
     ) {
       this.serverRequest();
+    }
+    if (prevState.searchRequest !== this.state.searchRequest) {
       this.clearGalleryContainer();
     }
   }
