@@ -32,7 +32,7 @@ const App = () => {
           setStatus('resolve');
         })
         .catch(error => setStatus('rejected'));
-    } else if (searchRequest)
+    } else if (searchRequest === '')
       return Notify.info('Make your search request!', {
         position: 'center-center',
         timeout: 1500,
