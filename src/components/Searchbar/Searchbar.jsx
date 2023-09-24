@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-// import { useState } from 'react';
+import React, { useState } from 'react';
 
 import {
   SearchbarEl,
@@ -10,47 +9,41 @@ import IconButtonStyle from 'components/IconButton/IconButton';
 
 import { ReactComponent as SearchIcon } from 'Icons/searchIcon.svg';
 
-class Searchbar extends Component {
-  state = {
-    searchRequest: '',
+const Searchbar = ({ onSubmit }) => {
+  const [searchRequest, setsearchRequest] = useState('');
+
+  const handleChange = ({ target: { value } }) => {
+    setsearchRequest(value);
   };
 
-  handleChange = ({ target: { value } }) => {
-    this.setState({ searchRequest: value });
-  };
-
-  сreateRequest = e => {
+  const сreateRequest = e => {
     e.preventDefault();
-    this.props.onSubmit(this.state.searchRequest);
-    this.resetForm();
+    onSubmit(searchRequest);
+    resetForm();
   };
 
-  resetForm = () => {
-    this.setState({
-      searchRequest: '',
-    });
+  const resetForm = () => {
+    setsearchRequest('');
   };
 
-  render() {
-    return (
-      <SearchbarEl className="searchbar">
-        <SearchForm className="form" onSubmit={this.сreateRequest}>
-          <IconButtonStyle type="submit" className="button">
-            <SearchIcon width="24px" height="24px" />
-          </IconButtonStyle>
-          <SearchFormInput
-            className="input"
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            onChange={this.handleChange}
-            value={this.state.searchRequest}
-          />
-        </SearchForm>
-      </SearchbarEl>
-    );
-  }
-}
+  return (
+    <SearchbarEl className="searchbar">
+      <SearchForm className="form" onSubmit={сreateRequest}>
+        <IconButtonStyle type="submit" className="button">
+          <SearchIcon width="24px" height="24px" />
+        </IconButtonStyle>
+        <SearchFormInput
+          className="input"
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          onChange={handleChange}
+          value={searchRequest}
+        />
+      </SearchForm>
+    </SearchbarEl>
+  );
+};
 
 export default Searchbar;

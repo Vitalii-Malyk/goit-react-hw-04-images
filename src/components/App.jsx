@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-// import { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import Searchbar from 'components/Searchbar/Searchbar';
@@ -14,106 +14,95 @@ import { ReactComponent as SearchIcon } from 'Icons/searchIcon.svg';
 
 import { AppEl } from 'components/App.styled';
 
-export default class App extends Component {
-  state = {
-    searchRequest: null,
-    images: [],
-    modalImg: '',
-    showModal: false,
-    page: 1,
-    status: 'idle',
-    totalHits: null,
-  };
+const App = () => {
+  const [searchRequest, setSearchRequest] = useState(null);
+  const [images, setImages] = useState([]);
+  const [modalImg, setModalImg] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState('idle');
+  const [totalImg, setTotalImg] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.searchRequest !== this.state.searchRequest ||
-      prevState.page !== this.state.page
-    ) {
-      this.serverRequest();
-    }
-    if (prevState.searchRequest !== this.state.searchRequest) {
-      this.clearGalleryContainer();
-    }
-  }
-
-  serverRequest = () => {
-    const { searchRequest, page } = this.state;
+  const serverRequest = useCallback(() => {
     if (searchRequest) {
       getImages(searchRequest, page)
         .then(response => {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...response.hits],
-            status: 'resolve',
-            totalHits: response.totalHits,
-          }));
+          setTotalImg(response.totalHits);
+          setImages(prev => [...prev, ...response.hits]);
+          setStatus('resolve');
         })
-        .catch(error => this.setState({ status: 'rejected' }));
-    } else
+        .catch(error => setStatus('rejected'));
+    } else if (searchRequest)
       return Notify.info('Make your search request!', {
         position: 'center-center',
         timeout: 1500,
         clickToClose: true,
       });
+  }, [page, searchRequest]);
+
+  useEffect(() => {
+    serverRequest();
+  }, [searchRequest, page, serverRequest]);
+
+  useEffect(() => {
+    clearGalleryContainer();
+  }, [searchRequest]);
+
+  const formSubmitHandler = searchRequest => {
+    setSearchRequest(searchRequest);
   };
 
-  formSubmitHandler = searchRequest => {
-    this.setState({ searchRequest: searchRequest });
+  const loadNextPage = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  loadNextPage = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-  clearGalleryContainer = () => {
-    this.setState({ images: [] });
+  const clearGalleryContainer = () => {
+    setImages([]);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
+  const toggleModal = () => {
+    setShowModal(showModal => !showModal);
   };
 
-  getLargeImg = url => {
-    this.toggleModal();
-    this.setState({ modalImg: url });
+  const getLargeImg = url => {
+    toggleModal();
+    setModalImg(url);
   };
 
-  render() {
-    const { modalImg, showModal, images, status, totalHits } = this.state;
-    const howManyPictures = totalHits <= this.state.page * 12;
-    const paramsNotifyFailure = {
-      position: 'center-center',
-      timeout: 1500,
-      clickToClose: true,
-    };
+  const howManyPictures = totalImg <= page * 12;
+  const paramsNotifyFailure = {
+    position: 'center-center',
+    timeout: 1500,
+    clickToClose: true,
+  };
 
-    return (
-      <AppEl>
-        <Searchbar onSubmit={this.formSubmitHandler} />
-        {totalHits === 0 &&
-          Notify.failure(
-            'There were no images found for your request. Try another request',
-            { paramsNotifyFailure }
-          )}
-        {status === 'pending' && <Loader />}
-        {status === 'resolve' && (
-          <ImageGallery className="Gallery">
-            <ImageGalleryItem images={images} onClick={this.getLargeImg} />
-          </ImageGallery>
+  return (
+    <AppEl>
+      <Searchbar onSubmit={formSubmitHandler} />
+      {totalImg === 0 &&
+        Notify.failure(
+          'There were no images found for your request. Try another request',
+          { paramsNotifyFailure }
         )}
-        {!howManyPictures && (
-          <IconButtonLoadMore onClick={this.loadNextPage}>
-            <SearchIcon width="32px" height="32px" />
-            Load more...
-          </IconButtonLoadMore>
-        )}
-        {status === 'rejected' &&
-          Notify.failure('Error, try reloading the page!', {
-            paramsNotifyFailure,
-          })}
-        {showModal && <Modal url={modalImg} onClose={this.toggleModal} />}
-      </AppEl>
-    );
-  }
-}
+      {status === 'pending' && <Loader />}
+      {status === 'resolve' && (
+        <ImageGallery className="Gallery">
+          <ImageGalleryItem images={images} onClick={getLargeImg} />
+        </ImageGallery>
+      )}
+      {!howManyPictures && (
+        <IconButtonLoadMore onClick={loadNextPage}>
+          <SearchIcon width="32px" height="32px" />
+          Load more...
+        </IconButtonLoadMore>
+      )}
+      {status === 'rejected' &&
+        Notify.failure('Error, try reloading the page!', {
+          paramsNotifyFailure,
+        })}
+      {showModal && <Modal url={modalImg} onClose={toggleModal} />}
+    </AppEl>
+  );
+};
+
+export default App;
