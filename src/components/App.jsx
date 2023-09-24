@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -23,28 +23,32 @@ const App = () => {
   const [status, setStatus] = useState('idle');
   const [totalImg, setTotalImg] = useState(null);
 
-  const serverRequest = useCallback(() => {
+  useEffect(() => {
     if (searchRequest) {
-      getImages(searchRequest, page)
-        .then(response => {
-          setTotalImg(response.totalHits);
-          setImages(prev => [...prev, ...response.hits]);
+      const serverRequest = async () => {
+        try {
+          const data = await getImages(searchRequest, page);
+          setTotalImg(data.totalHits);
+          setImages(prev => [...prev, ...data.hits]);
           setStatus('resolve');
-        })
-        .catch(error => setStatus('rejected'));
-    } else if (searchRequest === '')
-      return Notify.info('Make your search request!', {
-        position: 'center-center',
-        timeout: 1500,
-        clickToClose: true,
-      });
+          if (data.totalHits > 0 && page === 1) {
+            Notify.info(`Found ${data.totalHits} images`);
+          } else if (searchRequest === '')
+            return Notify.info('Make your search request!', {
+              position: 'center-center',
+              timeout: 1500,
+              clickToClose: true,
+            });
+        } catch (error) {
+          setStatus('rejected');
+        }
+      };
+      serverRequest();
+    }
   }, [page, searchRequest]);
 
   useEffect(() => {
-    serverRequest();
-  }, [searchRequest, page, serverRequest]);
-
-  useEffect(() => {
+    setPage(1);
     clearGalleryContainer();
   }, [searchRequest]);
 
